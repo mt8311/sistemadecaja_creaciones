@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Caja</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #0d0d14;
+    --surface: #14141f;
+    --card: #1c1c2e;
+    --border: #2a2a40;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --danger: #ff4d6d;
+    --warn: #ffb703;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --success: #06d6a0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── LOGIN ─────────────────────────────────── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 30% 50%, #1a1040 0%, #0d0d14 60%);
+  }
+
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 380px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    color: var(--text);
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+
+  input[type=text], input[type=password], input[type=number], select, textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    transition: border 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-primary:hover { background: #7c73ff; transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: #0d0d14; }
+  .btn-danger  { background: var(--danger); color: #fff; }
+  .btn-warn    { background: var(--warn); color: #0d0d14; }
+  .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 7px 14px; font-size: 13px; }
+
+  .error-msg { color: var(--danger); font-size: 13px; margin-top: 12px; text-align: center; }
+
+  /* ── MAIN APP ──────────────────────────────── */
+  #app { display: none; min-height: 100vh; }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-logo { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 2px; color: var(--accent); }
+  .turno-badge {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .turno-badge span { color: var(--accent2); font-weight: 600; }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 13px;
+  }
+  .user-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+
+  /* NAV */
+  .nav-tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 24px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CONTENT */
+  .content { padding: 32px 24px; max-width: 1100px; margin: 0 auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .stat-value.green { color: var(--success); }
+  .stat-value.purple { color: var(--accent); }
+  .stat-value.yellow { color: var(--warn); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(108,99,255,0.05); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge-green  { background: rgba(6,214,160,0.15); color: var(--success); }
+  .badge-yellow { background: rgba(255,183,3,0.15);  color: var(--warn); }
+  .badge-red    { background: rgba(255,77,109,0.15);  color: var(--danger); }
+  .badge-purple { background: rgba(108,99,255,0.15); color: var(--accent); }
+
+  /* FORM GRID */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-full { grid-column: 1/-1; }
+
+  /* PIN MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    width: 340px;
+    text-align: center;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+  .pin-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    letter-spacing: 16px;
+    color: var(--accent);
+    margin-bottom: 24px;
+    min-height: 48px;
+  }
+
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .pin-btn {
+    height: 56px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pin-btn:hover { background: var(--border); }
+  .pin-btn:active { transform: scale(0.95); }
+  .pin-clear { background: rgba(255,183,3,0.1); border-color: var(--warn); color: var(--warn); }
+  .pin-ok    { background: rgba(6,214,160,0.1); border-color: var(--success); color: var(--success); }
+
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+  }
+  .section-title { font-size: 20px; font-weight: 700; }
+
+  .gap-8 { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* TURNO ACTIVO BANNER */
+  .turno-banner {
+    background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(0,212,170,0.1));
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .turno-info { display: flex; flex-direction: column; gap: 4px; }
+  .turno-cajero { font-size: 16px; font-weight: 700; color: var(--accent2); }
+  .turno-desde { font-size: 12px; color: var(--muted); }
+
+  /* CARRITO */
+  .producto-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: left;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .producto-btn:hover { border-color: var(--accent); background: rgba(108,99,255,0.08); }
+  .producto-nombre { font-size: 13px; font-weight: 600; }
+  .producto-precio { font-size: 12px; color: var(--accent2); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+  .producto-cat { font-size: 11px; color: var(--muted); }
+
+  .carrito-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .carrito-item:last-child { border-bottom: none; }
+  .carrito-item-nombre { flex: 1; font-size: 13px; font-weight: 600; }
+  .carrito-item-det { font-size: 12px; color: var(--muted); }
+  .carrito-item-total { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700; color: var(--success); white-space: nowrap; }
+
+  /* RESPONSIVE */
+  @media (max-width: 700px) {
+    .venta-grid { grid-template-columns: 1fr !important; }
+  }
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .content { padding: 20px 16px; }
+    .topbar { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ CONFIGURACIÓN ═══════════════════════════════════════ -->
+<script>
+  // ⚠️ REEMPLAZA ESTA URL con la de tu Apps Script desplegado
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxsIs3SfFMme9Peqp1ltFiG9rf3FpCUFSFf_-rfBv6YbqmxJTG4opnk_HSkcrJ5FaP_Fw/exec';
+
+  let currentUser = null;
+  let turnoActivo = null;
+  let pendingAction = null; // acción que espera PIN
+
+  async function api(data) {
+    const params = new URLSearchParams();
+    Object.keys(data).forEach(k => {
+      const v = data[k];
+      params.append(k, typeof v === 'object' ? JSON.stringify(v) : v);
+    });
+    const res = await fetch(API_URL + '?' + params.toString());
+    return res.json();
+  }
+
+  function fmt(n) {
+    return Number(n || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+  }
+  function fmtDate(iso) {
+    return iso ? new Date(iso).toLocaleString('es-MX') : '—';
+  }
+</script>
+
+<!-- ═══ LOGIN ═══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">Sistema</div>
+    <div class="login-title">Control de Caja</div>
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="l-user" placeholder="tu usuario" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="l-pass" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Entrar →</button>
+    <div class="error-msg" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ═══ APP PRINCIPAL ═══════════════════════════════════════ -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">CAJA</div>
+      <div class="turno-badge" id="tb-turno">Sin turno activo</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-dot"></div>
+        <span id="tb-user">—</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs" id="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('inicio')" data-page="inicio">Inicio</div>
+    <div class="nav-tab" onclick="showPage('ventas')" data-page="ventas">Nueva Venta</div>
+    <div class="nav-tab" onclick="showPage('notas')" data-page="notas">Notas</div>
+    <div class="nav-tab" onclick="showPage('caja')" data-page="caja">Turno / Caja</div>
+    <div class="nav-tab" onclick="showPage('historial')" data-page="historial">Historial</div>
+    <div class="nav-tab" id="tab-admin" onclick="showPage('admin')" data-page="admin" style="display:none">Admin</div>
+    <div class="nav-tab" id="tab-productos" onclick="showPage('productos')" data-page="productos" style="display:none">Productos</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ─── INICIO ─────────────────────────────── -->
+    <div class="page active" id="page-inicio">
+      <div class="section-header">
+        <div class="section-title">Panel de hoy</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadInicio()">↻ Actualizar</button>
+      </div>
+
+      <div id="turno-banner"></div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total del día</div><div class="stat-value green" id="s-total">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Ventas registradas</div><div class="stat-value purple" id="s-ventas">0</div></div>
+        <div class="stat-card"><div class="stat-label">Notas pendientes</div><div class="stat-value yellow" id="s-notas">0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Ventas recientes</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Folio</th><th>Producto</th><th>Qty</th><th>Total</th><th>Cajero</th><th>Hora</th></tr></thead>
+            <tbody id="ventas-recientes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── NUEVA VENTA ──────────────────────────── -->
+    <div class="page" id="page-ventas">
+      <div class="section-title" style="margin-bottom:24px">Nueva Venta</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px" class="venta-grid">
+
+        <!-- SELECTOR DE PRODUCTOS -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Agregar producto</div>
+          <div class="field">
+            <label>Buscar producto</label>
+            <input type="text" id="v-buscar" placeholder="Escribe para filtrar..." oninput="filtrarProductos()" autocomplete="off">
+          </div>
+          <div id="v-lista-productos" style="display:grid;gap:6px;max-height:340px;overflow-y:auto"></div>
+        </div>
+
+        <!-- CARRITO -->
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">Carrito</div>
+          <div id="carrito-items" style="min-height:100px;margin-bottom:16px"></div>
+          <div style="border-top:1px solid var(--border);padding-top:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <span style="color:var(--muted);font-size:13px">TOTAL</span>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:28px;font-weight:700;color:var(--success)" id="carrito-total">$0.00</span>
+            </div>
+            <div class="field" style="margin-bottom:12px">
+              <label>Nota asociada (opcional)</label>
+              <input type="text" id="v-nota-id" placeholder="Número de nota si aplica">
+            </div>
+            <div class="gap-8">
+              <button class="btn btn-primary" style="flex:1" onclick="iniciarVenta()">Cobrar con PIN →</button>
+              <button class="btn btn-danger btn-sm" onclick="limpiarCarrito()">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal cantidad -->
+      <div class="modal-overlay" id="modal-qty">
+        <div class="modal-box">
+          <div class="modal-title" id="qty-producto-nombre">Producto</div>
+          <div class="modal-sub" id="qty-precio-label">Precio: —</div>
+          <div class="field" style="margin:20px 0">
+            <label>Cantidad</label>
+            <input type="number" id="qty-input" value="1" min="1" style="font-size:24px;text-align:center">
+          </div>
+          <div class="field" style="margin-bottom:20px">
+            <label>Precio unitario</label>
+            <input type="number" id="qty-precio-input" step="0.01" style="font-size:18px;text-align:center">
+          </div>
+          <div class="gap-8">
+            <button class="btn btn-success" style="flex:1" onclick="agregarAlCarrito()">Agregar →</button>
+            <button class="btn btn-ghost" onclick="cerrarModalQty()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── NOTAS ─────────────────────────────────── -->
+    <div class="page" id="page-notas">
+      <div class="section-header">
+        <div class="section-title">Notas de Venta</div>
+        <button class="btn btn-success btn-sm" onclick="abrirModalNota()">+ Nueva nota</button>
+      </div>
+
+      <div class="gap-8" style="margin-bottom:20px">
+        <button class="btn btn-ghost btn-sm" onclick="loadNotas('todas')">Todas</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadNotas('PENDIENTE')">Pendientes</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadNotas('COBRADA')">Cobradas</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Estatus</th><th>Cajero</th><th>Fecha</th><th>Acción</th></tr></thead>
+            <tbody id="notas-tabla"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Form nueva nota -->
+      <div class="card" id="form-nota" style="display:none">
+        <div class="card-title">Nueva Nota de Venta</div>
+        <div class="form-grid">
+          <div class="field"><label>Cliente</label><input type="text" id="n-cliente" placeholder="Nombre del cliente"></div>
+          <div class="field"><label>Total</label><input type="number" id="n-total" placeholder="0.00" step="0.01"></div>
+          <div class="field form-full"><label>Observaciones</label><textarea id="n-obs" rows="2" placeholder="Notas adicionales..."></textarea></div>
+        </div>
+        <div class="gap-8" style="margin-top:8px">
+          <button class="btn btn-success" onclick="crearNotaConPin()">Crear con PIN →</button>
+          <button class="btn btn-ghost" onclick="cerrarFormNota()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TURNO / CAJA ──────────────────────────── -->
+    <div class="page" id="page-caja">
+      <div class="section-title" style="margin-bottom:24px">Gestión de Turno</div>
+
+      <div class="card" id="panel-sin-turno">
+        <div class="card-title">No hay turno activo</div>
+        <button class="btn btn-success" onclick="iniciarAbrirTurno()">Abrir Turno con PIN →</button>
+      </div>
+
+      <div id="panel-turno-activo" style="display:none">
+        <div class="turno-banner">
+          <div class="turno-info">
+            <div class="turno-cajero" id="caja-cajero-nombre">—</div>
+            <div class="turno-desde" id="caja-turno-desde">Desde: —</div>
+          </div>
+          <div class="gap-8">
+            <button class="btn btn-warn btn-sm" onclick="iniciarRelevo()">Relevo →</button>
+            <button class="btn btn-ghost btn-sm" onclick="iniciarCierreCaja()">Cuadre de Caja →</button>
+            <button class="btn btn-danger btn-sm" onclick="iniciarCerrarTurno()">Cerrar Turno →</button>
+          </div>
+        </div>
+
+        <div class="card" id="form-relevo" style="display:none">
+          <div class="card-title">Registrar Relevo</div>
+          <div class="form-grid">
+            <div class="field"><label>Tu nombre (quien entra)</label><input type="text" id="rel-entra"></div>
+            <div class="field"><label>Nombre de quien sale</label><input type="text" id="rel-sale"></div>
+          </div>
+          <div class="gap-8" style="margin-top:8px">
+            <button class="btn btn-warn" onclick="confirmarRelevo()">Confirmar con PIN →</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('form-relevo').style.display='none'">Cancelar</button>
+          </div>
+        </div>
+
+        <div class="card" id="form-cierre-caja" style="display:none">
+          <div class="card-title">Cuadre de Caja</div>
+          <div class="form-grid">
+            <div class="field"><label>Efectivo contado ($)</label><input type="number" id="cc-efectivo" placeholder="0.00" step="0.01"></div>
+            <div class="field"><label>Observaciones</label><input type="text" id="cc-obs" placeholder="Notas del cuadre"></div>
+          </div>
+          <div id="cuadre-preview" style="display:none;margin-top:16px"></div>
+          <div class="gap-8" style="margin-top:8px">
+            <button class="btn btn-success" onclick="confirmarCierreCaja()">Registrar Cuadre con PIN →</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('form-cierre-caja').style.display='none'">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── HISTORIAL ─────────────────────────────── -->
+    <div class="page" id="page-historial">
+      <div class="section-title" style="margin-bottom:24px">Historial de Ventas</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Folio</th><th>Producto</th><th>Qty</th><th>Precio</th><th>Total</th><th>Cajero</th><th>Fecha</th></tr></thead>
+            <tbody id="hist-tabla"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ADMIN ──────────────────────────────────── -->
+    <div class="page" id="page-admin">
+      <div class="section-title" style="margin-bottom:24px">Administración</div>
+
+      <div class="card">
+        <div class="card-title">Usuarios del sistema</div>
+        <div class="table-wrap" style="margin-bottom:16px">
+          <table>
+            <thead><tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th></tr></thead>
+            <tbody id="admin-usuarios"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="toggleFormUsuario()">+ Nuevo usuario</button>
+      </div>
+
+      <div class="card" id="form-usuario" style="display:none">
+        <div class="card-title">Nuevo Usuario</div>
+        <div class="form-grid">
+          <div class="field"><label>Nombre completo</label><input type="text" id="u-nombre"></div>
+          <div class="field"><label>Usuario (login)</label><input type="text" id="u-usuario"></div>
+          <div class="field"><label>Contraseña</label><input type="password" id="u-pass"></div>
+          <div class="field"><label>PIN (4 dígitos)</label><input type="password" id="u-pin" maxlength="4"></div>
+          <div class="field">
+            <label>Rol</label>
+            <select id="u-rol">
+              <option value="cajero">Cajero</option>
+              <option value="vendedor">Vendedor</option>
+              <option value="contador">Contador</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="gap-8" style="margin-top:8px">
+          <button class="btn btn-primary" onclick="crearUsuario()">Crear usuario</button>
+          <button class="btn btn-ghost" onclick="toggleFormUsuario()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PRODUCTOS ─────────────────────────────── -->
+    <div class="page" id="page-productos">
+      <div class="section-header">
+        <div class="section-title">Catálogo de Productos</div>
+        <button class="btn btn-success btn-sm" onclick="toggleFormProducto()">+ Nuevo producto</button>
+      </div>
+
+      <!-- Filtros -->
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <input type="text" id="prod-buscar" placeholder="Buscar producto..." oninput="renderTablaProductos()" style="flex:1;min-width:200px">
+        <select id="prod-filtro-cat" onchange="renderTablaProductos()" style="width:160px">
+          <option value="">Todas las categorías</option>
+        </select>
+        <select id="prod-filtro-estado" onchange="renderTablaProductos()" style="width:130px">
+          <option value="activo">Activos</option>
+          <option value="todos">Todos</option>
+          <option value="inactivo">Inactivos</option>
+        </select>
+      </div>
+
+      <!-- Tabla -->
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Nombre</th><th>Categoría</th><th>P. Mayoreo</th><th>P. Menudeo</th><th>Estado</th><th>Acciones</th></tr></thead>
+            <tbody id="prod-tabla"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Form nuevo / editar producto -->
+      <div class="card" id="form-producto" style="display:none">
+        <div class="card-title" id="form-prod-title">Nuevo Producto</div>
+        <input type="hidden" id="prod-edit-id">
+        <div class="form-grid">
+          <div class="field form-full"><label>Nombre del producto</label><input type="text" id="prod-nombre" placeholder="Ej: POSTER MAYOREO"></div>
+          <div class="field">
+            <label>Categoría</label>
+            <input type="text" id="prod-categoria" list="cats-list" placeholder="Ej: POSTER">
+            <datalist id="cats-list"></datalist>
+          </div>
+          <div class="field"><label>Precio Mayoreo</label><input type="number" id="prod-precio-may" placeholder="0.00" step="0.01"></div>
+          <div class="field"><label>Precio Menudeo</label><input type="number" id="prod-precio-men" placeholder="0.00" step="0.01"></div>
+        </div>
+        <div class="gap-8" style="margin-top:12px">
+          <button class="btn btn-primary" onclick="guardarProducto()">Guardar</button>
+          <button class="btn btn-ghost" onclick="toggleFormProducto()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- ═══ PIN MODAL ════════════════════════════════════════════ -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="pin-title">Confirmar con PIN</div>
+    <div class="modal-sub" id="pin-sub">Ingresa tu PIN de 4 dígitos</div>
+    <div class="pin-display" id="pin-display">····</div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinInput('1')">1</button>
+      <button class="pin-btn" onclick="pinInput('2')">2</button>
+      <button class="pin-btn" onclick="pinInput('3')">3</button>
+      <button class="pin-btn" onclick="pinInput('4')">4</button>
+      <button class="pin-btn" onclick="pinInput('5')">5</button>
+      <button class="pin-btn" onclick="pinInput('6')">6</button>
+      <button class="pin-btn" onclick="pinInput('7')">7</button>
+      <button class="pin-btn" onclick="pinInput('8')">8</button>
+      <button class="pin-btn" onclick="pinInput('9')">9</button>
+      <button class="pin-btn pin-clear" onclick="pinClear()">⌫</button>
+      <button class="pin-btn" onclick="pinInput('0')">0</button>
+      <button class="pin-btn pin-ok" onclick="pinConfirm()">✓</button>
+    </div>
+    <div class="error-msg" id="pin-error"></div>
+    <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="pinCancel()">Cancelar</button>
+  </div>
+</div>
+
+<!-- ═══ LÓGICA ════════════════════════════════════════════════ -->
+<script>
+
+// ── NAVEGACIÓN ───────────────────────────────────────────────
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  const pg = document.getElementById('page-' + name);
+  if (pg) pg.classList.add('active');
+  document.querySelector(`[data-page="${name}"]`)?.classList.add('active');
+  if (name === 'inicio')    loadInicio();
+  if (name === 'historial') loadHistorial();
+  if (name === 'notas')     loadNotas('todas');
+  if (name === 'admin')     loadAdmin();
+  if (name === 'productos') renderTablaProductos();
+}
+
+// ── AUTH ─────────────────────────────────────────────────────
+
+async function doLogin() {
+  const usuario    = document.getElementById('l-user').value.trim();
+  const contrasena = document.getElementById('l-pass').value;
+  const r = await api({ action: 'login', usuario, contrasena });
+  if (!r.ok) { document.getElementById('login-err').textContent = r.error; return; }
+  currentUser = r.data;
+  localStorage.setItem('caja_user', JSON.stringify(currentUser));
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('tb-user').textContent = currentUser.nombre + ' · ' + currentUser.rol;
+  if (currentUser.rol === 'admin') {
+    document.getElementById('tab-admin').style.display = '';
+    document.getElementById('tab-productos').style.display = '';
+  }
+  loadInicio();
+  await refreshTurno();
+}
+
+function doLogout() {
+  currentUser = null;
+  turnoActivo = null;
+  localStorage.removeItem('caja_user');
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+// ── TURNO ─────────────────────────────────────────────────────
+
+async function refreshTurno() {
+  const r = await api({ action: 'getTurnoActivo' });
+  turnoActivo = r.data;
+  const badge = document.getElementById('tb-turno');
+  if (turnoActivo) {
+    badge.innerHTML = `Turno: <span>${turnoActivo.cajero_nombre}</span>`;
+    document.getElementById('panel-sin-turno').style.display = 'none';
+    document.getElementById('panel-turno-activo').style.display = 'block';
+    document.getElementById('caja-cajero-nombre').textContent = turnoActivo.cajero_nombre + ' en caja';
+    document.getElementById('caja-turno-desde').textContent = 'Desde: ' + fmtDate(turnoActivo.hora_inicio);
+  } else {
+    badge.innerHTML = 'Sin turno activo';
+    document.getElementById('panel-sin-turno').style.display = 'block';
+    document.getElementById('panel-turno-activo').style.display = 'none';
+  }
+}
+
+function iniciarAbrirTurno() {
+  pedirPin('Abrir Turno', 'Confirma con tu PIN para abrir el turno', async (pin) => {
+    const r = await api({ action: 'abrirTurno', cajero_id: currentUser.id, cajero_nombre: currentUser.nombre, pin });
+    if (!r.ok) return alert(r.error);
+    await refreshTurno();
+    alert('✅ Turno abierto');
+  });
+}
+
+function iniciarCerrarTurno() {
+  if (!turnoActivo) return;
+  pedirPin('Cerrar Turno', 'Ingresa tu PIN para cerrar el turno', async (pin) => {
+    const r = await api({ action: 'cerrarTurno', turno_id: turnoActivo.id, cajero_id: currentUser.id, pin });
+    if (!r.ok) return alert(r.error);
+    await refreshTurno();
+    alert(`✅ Turno cerrado. Total: ${fmt(r.data.total)}`);
+  });
+}
+
+function iniciarRelevo() {
+  document.getElementById('form-relevo').style.display = 'block';
+}
+
+function confirmarRelevo() {
+  const entra = document.getElementById('rel-entra').value.trim();
+  const sale  = document.getElementById('rel-sale').value.trim();
+  if (!entra || !sale) return alert('Completa los campos');
+  pedirPin('Relevo', `${entra} entra, ${sale} sale`, async (pin) => {
+    const r = await api({ action: 'relevo', turno_id: turnoActivo.id, entra_id: currentUser.id, entra_nombre: entra, sale_nombre: sale, pin });
+    if (!r.ok) return alert(r.error);
+    document.getElementById('form-relevo').style.display = 'none';
+    await refreshTurno();
+    alert('✅ Relevo registrado');
+  });
+}
+
+function iniciarCierreCaja() {
+  document.getElementById('form-cierre-caja').style.display = 'block';
+}
+
+function confirmarCierreCaja() {
+  const efectivo = document.getElementById('cc-efectivo').value;
+  const obs      = document.getElementById('cc-obs').value;
+  if (!efectivo) return alert('Ingresa el efectivo contado');
+  pedirPin('Cuadre de Caja', 'Confirma el cuadre con tu PIN', async (pin) => {
+    const r = await api({ action: 'cierreCaja', turno_id: turnoActivo.id, cajero_id: currentUser.id, cajero_nombre: currentUser.nombre, efectivo_contado: efectivo, observaciones: obs, pin });
+    if (!r.ok) return alert(r.error);
+    document.getElementById('form-cierre-caja').style.display = 'none';
+    alert(`✅ Cuadre registrado.\nSistema: ${fmt(r.data.total_sistema)}\nDiferencia: ${fmt(r.data.diferencia)}`);
+  });
+}
+
+// ── VENTAS ────────────────────────────────────────────────────
+
+// ── CATÁLOGO DE PRODUCTOS ─────────────────────────────────────
+
+const CATALOGO = [
+  {id:1, nombre:"POSTER MAYOREO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:2, nombre:"POSTER MENUDEO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:3, nombre:"POSTER CARICATURA MAYOREO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:4, nombre:"POSTER CARICATURA MENUDEO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:5, nombre:"POSTER PIÑATERO MAYOREO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:6, nombre:"POSTER PIÑATERO MENUDEO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:7, nombre:"CALENDARIO TAMAÑO POSTER MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:8, nombre:"CALENDARIO TAMAÑO POSTER MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:9, nombre:"CALENDARIO TAMAÑO 40X50 MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:10, nombre:"CALENDARIO TAMAÑO 40X50 MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:11, nombre:"CALENDARIO RAZON SOCIAL TAMAÑO 40X50", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:12, nombre:"POSTER PANORAMICO MAYOREO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:13, nombre:"POSTER PANORAMICO MENUDEO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:14, nombre:"40X50 NORMAL MAYOREO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:15, nombre:"40X50 CARICATURA MAYOREO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:16, nombre:"40X50 NORMAL MENUDEO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:17, nombre:"40X50 CARICATURA MENUDEO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:18, nombre:"CALENDARIO TAMAÑO 28X40 MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:19, nombre:"CALENDARIO TAMAÑO 28X40 MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:20, nombre:"CALENDARIO RAZON SOCIAL TAMAÑO 28X40 VERTICAL", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:21, nombre:"CALENDARIO RAZON SOCIAL TAMAÑO 28X40 HORIZONTAL", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:22, nombre:"CROMO MAYOREO", categoria:"CROMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:23, nombre:"CROMO CARICATURA MAYOREO", categoria:"CROMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:24, nombre:"CROMO MENUDEO", categoria:"CROMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:25, nombre:"CROMO CARICATURA MENUDEO", categoria:"CROMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:26, nombre:"CALENDARIO TAMAÑO 20X25  VERTICAL MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:27, nombre:"CALENDARIO TAMAÑO 20X25 VERTICAL MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:28, nombre:"CALENDARIO TAMAÑO 20X25 HORIZONTAL MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:29, nombre:"CALENDARIO TAMAÑO 20X25 HORIZONTAL MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:30, nombre:"CALENDARIO RAZON SOCIAL TAMAÑO 20X25", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:31, nombre:"20X25 MAYOREO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:32, nombre:"20X25 CARICATURA MAYOREO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:33, nombre:"20X25 MENUDEO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:34, nombre:"20X25 CARICATURA MENUDEO", categoria:"FOTOGRAFIA", precio_mayoreo:0, precio_menudeo:0},
+  {id:35, nombre:"MICRO MAYOREO", categoria:"MICRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:36, nombre:"MICRO CARICATURA MAYOREO", categoria:"MICRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:37, nombre:"MICRO MENUDEO", categoria:"MICRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:38, nombre:"MICRO CARICATURA MENUDEO", categoria:"MICRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:39, nombre:"CALENDARIO TAMAÑO MICRO MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:40, nombre:"CALENDARIO TAMAÑO MICRO MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:41, nombre:"1/2 POSTAL MENUDEO", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:42, nombre:"1/2 POSTAL MAYOREO", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:43, nombre:"2 POSTAL MENUDEO", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:44, nombre:"2 POSTAL MAYOREO", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:45, nombre:"PAQ DE CALENDARIOS 1/2 POSTAL", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:46, nombre:"PAQ DE CALENDARIOS POSTAL", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:47, nombre:"RESPALDO", categoria:"ACCESORIOS", precio_mayoreo:0, precio_menudeo:0},
+  {id:48, nombre:"TACO CHICO MAYOREO", categoria:"TACO", precio_mayoreo:0, precio_menudeo:0},
+  {id:49, nombre:"TACO CHICO MENUDEO", categoria:"TACO", precio_mayoreo:0, precio_menudeo:0},
+  {id:50, nombre:"TACO GRANDE MAYOREO", categoria:"TACO", precio_mayoreo:0, precio_menudeo:0},
+  {id:51, nombre:"TACO GRANDE MENUDEO", categoria:"TACO", precio_mayoreo:0, precio_menudeo:0},
+  {id:52, nombre:"EXFOLIADOR GRANDE (TACO+RESPALDO) MAYOREO", categoria:"EXFOLIADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:53, nombre:"EXFOLIADOR GRANDE (TACO+RESPALDO) MENUDEO", categoria:"EXFOLIADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:54, nombre:"EXFOLIADOR CHICO (TACO+RESPALDO) MAYOREO", categoria:"EXFOLIADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:55, nombre:"EXFOLIADOR CHICO (TACO+RESPALDO) MENUDEO", categoria:"EXFOLIADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:56, nombre:"ORGANIZADOR CHICO MENUDEO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:57, nombre:"ORGANIZADOR MEDIANO MENUDEO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:58, nombre:"ORGANIZADOR GRANDE MENUDEO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:59, nombre:"ORGANIZADOR ECONOMICO MENUDEO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:60, nombre:"ORGANIZADOR CHICO MAYOREO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:61, nombre:"ORGANIZADOR MEDIANO MAYOREO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:62, nombre:"ORGANIZADOR GRANDE MAYOREO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:63, nombre:"ORGANIZADOR ECONOMICO MAYOREO", categoria:"ORGANIZADOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:64, nombre:"CALENDARIO INDUSTRIAL CHICO MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:65, nombre:"CALENDARIO INDUSTRIAL MEDIANO MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:66, nombre:"CALENDARIO INDUSTRIAL GRANDE MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:67, nombre:"CALENDARIO INDUSTRIAL CHICO MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:68, nombre:"CALENDARIO INDUSTRIAL MEDIANO MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:69, nombre:"CALENDARIO INDUSTRIAL GRANDE MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:70, nombre:"CALENDARIO DE ESCRITORIO MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:71, nombre:"CALENDARIO DE ESCRITORIO MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:72, nombre:"CUADRO POLIOLEO SENCILLO 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:73, nombre:"CUADRO POLIOLEO ONDULADO 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:74, nombre:"CUADRO POLIOLEO RAUTEADO 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:75, nombre:"CUADRO POLIOLEO QUINTUPLE 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:76, nombre:"CUADRO POLIOLEO QUINTUPLE 150X80", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:77, nombre:"CUADRO RESINA SENCILLO 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:78, nombre:"CUADRO RESINA RAUTEADO 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:79, nombre:"CUADRO RESINA QUINTUPLE 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:80, nombre:"CUADRO RESINA QUINTUPLE 150X80", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:81, nombre:"CUADRO POLIOLEO SENCILLO 40X50", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:82, nombre:"CUADRO POLIOLEO ONDULADO 40X50", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:83, nombre:"CUADRO POLIOLEO RAUTEADO 40X50", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:84, nombre:"CUADRO RESINA SENCILLO 40X50", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:85, nombre:"CUADRO RESINA RAUTEADO 40X50", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:86, nombre:"CUADRO POLIOLEO SENCILLO 28X40", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:87, nombre:"CUADRO POLIOLEO ONDULADO 28X40", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:88, nombre:"CUADRO POLIOLEO RAUTEADO 28X40", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:89, nombre:"CUADRO RESINA SENCILLO 28X40", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:90, nombre:"CUADRO RESINA RAUTEADO 28X40", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:91, nombre:"CUADRO POLIOLEO SENCILLO 20X25", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:92, nombre:"CUADRO POLIOLEO ONDULADO 20X25", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:93, nombre:"CUADRO POLIOLEO RAUTEADO 20X25", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:94, nombre:"CUADRO RESINA SENCILLO 20X25", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:95, nombre:"CUADRO RESINA RAUTEADO 20X25", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:96, nombre:"CUADRO POLIOLEO SENCILLO TAMAÑO PERSONALIZADO", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:97, nombre:"CUADRO POLIOLEO ONDULADO TAMAÑO PERSONALIZADO", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:98, nombre:"CUADRO POLIOLEO RAUTEADO TAMAÑO PERSONALIZADO", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:99, nombre:"CUADRO RESINA SENCILLO TAMAÑO PERSONALIZADO", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:100, nombre:"CUADRO RESINA RAUTEADO TAMAÑO PERSONALIZADO", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:101, nombre:"IMPRESION 56X86", categoria:"IMPRESION", precio_mayoreo:0, precio_menudeo:0},
+  {id:102, nombre:"IMPRESION 40X50", categoria:"IMPRESION", precio_mayoreo:0, precio_menudeo:0},
+  {id:103, nombre:"IMPRESION 28X40", categoria:"IMPRESION", precio_mayoreo:0, precio_menudeo:0},
+  {id:104, nombre:"IMPRESION 20X25", categoria:"IMPRESION", precio_mayoreo:0, precio_menudeo:0},
+  {id:105, nombre:"IMPRESION PERSONALIZADA", categoria:"IMPRESION", precio_mayoreo:0, precio_menudeo:0},
+  {id:106, nombre:"APLICACIÓN DE PEGAMENTO ROSA", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:107, nombre:"APLICACION DE POLIOLEO", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:108, nombre:"APLICACION DE PEGAMENTO ROSA + POLIOLEO", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:109, nombre:"APLICACIÓN DE RESINA", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:110, nombre:"PEGAMENTO ROSA 1/2", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:111, nombre:"PEGAMENTO ROSA LITRO", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:112, nombre:"PEGAMENTO ROSA GALON", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:113, nombre:"PEGAMENTO ROSA CUBETA 19L", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:114, nombre:"POLIOLEO 1/2", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:115, nombre:"POLIOLEO LITRO", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:116, nombre:"POLIOLEO GALON", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:117, nombre:"POLIOLEO CUBETA 19L", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:118, nombre:"PORCE 1/2", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:119, nombre:"PORCE  LITRO", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:120, nombre:"PORCE GALON", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:121, nombre:"PORCE  CUBETA 19L", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:122, nombre:"RESINA 1/4", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:123, nombre:"RESINA 1/2", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:124, nombre:"RESINA LITRO", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:125, nombre:"RESINA GALON", categoria:"INSUMO", precio_mayoreo:0, precio_menudeo:0},
+  {id:126, nombre:"SANTORAL 40 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:127, nombre:"SANTORAL 28 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:128, nombre:"SANTORAL 20 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:129, nombre:"SANTORAL 11 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:130, nombre:"SANTORAL 9 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:131, nombre:"SANTORAL 7 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:132, nombre:"SANTORAL 5 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:133, nombre:"SANTORAL 40 CM 1/2", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:134, nombre:"SANTORAL 28 CM 1/2", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:135, nombre:"SANTORAL 20 CM 1/2", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:136, nombre:"SANTORAL 11 CM 1/2", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:137, nombre:"SANTORAL 9 CM 1/2", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:138, nombre:"SANTORAL 7 CM 1/2", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:139, nombre:"SANTORAL 5 CM 1/2", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:140, nombre:"VARILLA 28CM", categoria:"VARILLA", precio_mayoreo:0, precio_menudeo:0},
+  {id:141, nombre:"VARILLA 56CM", categoria:"VARILLA", precio_mayoreo:0, precio_menudeo:0},
+  {id:142, nombre:"VARILLA 86CM", categoria:"VARILLA", precio_mayoreo:0, precio_menudeo:0},
+  {id:143, nombre:"VARILLA 40CM", categoria:"VARILLA", precio_mayoreo:0, precio_menudeo:0},
+  {id:144, nombre:"VARILLA 50CM", categoria:"VARILLA", precio_mayoreo:0, precio_menudeo:0},
+  {id:145, nombre:"VARILLA 20CM", categoria:"VARILLA", precio_mayoreo:0, precio_menudeo:0},
+  {id:146, nombre:"VARILLA 25CM", categoria:"VARILLA", precio_mayoreo:0, precio_menudeo:0},
+  {id:147, nombre:"BASTIDOR SENCILLO 56X86", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:148, nombre:"BASTIDOR RAUTEADO 56X86", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:149, nombre:"BASTIDOR SENCILLO 40X50", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:150, nombre:"BASTIDOR QUINTUPLE 150X80", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:151, nombre:"BASTIDOR QUINTUPLE  56X86", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:152, nombre:"BASTIDOR RAUTEADO 40X50", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:153, nombre:"BASTIDOR ECONOMICO 28X40", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:154, nombre:"BASTIDOR REFORZADO 28X40", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:155, nombre:"BASTIDOR 20X25", categoria:"BASTIDOR", precio_mayoreo:0, precio_menudeo:0},
+  {id:156, nombre:"CUADRO CANVAS PERSONALIZADO", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:157, nombre:"FRAZADA PERSONALIZADA", categoria:"ESPECIAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:158, nombre:"HOLOGRAFICO 3D", categoria:"ESPECIAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:159, nombre:"SERVICIO DE ENVARILLADO 40X50", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:160, nombre:"SERVICIO DE ENVARILLADO 28X40", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:161, nombre:"SERVICIO DE ENVARILLADO 20X25", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:162, nombre:"CALENDARIO 28X40 OFERTA", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:163, nombre:"CALENDARIO 20X25 OFERTA", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:164, nombre:"SERVICIO ESPECIAL EXTRAORDINARIO", categoria:"SERVICIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:165, nombre:"POSTER QUINTUPLE", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:166, nombre:"POSTER TRIPTICO", categoria:"POSTER", precio_mayoreo:0, precio_menudeo:0},
+  {id:167, nombre:"CALENDARIO PERGAMINO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:168, nombre:"CALENDARIO TAMAÑO 56X86 MAYOREO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:169, nombre:"CALENDARIO TAMAÑO 56X86 MENUDEO", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:170, nombre:"FIGURAS ARMABLES", categoria:"ESPECIAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:171, nombre:"PAQ HOJA CARICATURA PARA COLOREAR", categoria:"ESPECIAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:172, nombre:"CALENDARIO LITOGRAFÍA", categoria:"CALENDARIO", precio_mayoreo:0, precio_menudeo:0},
+  {id:173, nombre:"1/2 POSTAL OFERTA", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:174, nombre:"VIACRUCIS", categoria:"ESPECIAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:175, nombre:"PAQ 9 PIEZAS POSTAL", categoria:"POSTAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:176, nombre:"NOTA CANCELADA", categoria:"ADMIN", precio_mayoreo:0, precio_menudeo:0},
+  {id:177, nombre:"PVC", categoria:"ACCESORIOS", precio_mayoreo:0, precio_menudeo:0},
+  {id:178, nombre:"SANTORAL 56 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:179, nombre:"APARTADO", categoria:"ADMIN", precio_mayoreo:0, precio_menudeo:0},
+  {id:180, nombre:"SANTORAL 25 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:181, nombre:"SANTORAL 24 CM", categoria:"SANTORAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:182, nombre:"IMAN OFERTA", categoria:"ESPECIAL", precio_mayoreo:0, precio_menudeo:0},
+  {id:183, nombre:"CUADROS DE NEON FLEX 56X86", categoria:"CUADRO", precio_mayoreo:0, precio_menudeo:0},
+  {id:184, nombre:"ACRILICO", categoria:"ACCESORIOS", precio_mayoreo:0, precio_menudeo:0},
+  {id:185, nombre:"COSTO ENVIO", categoria:"ADMIN", precio_mayoreo:0, precio_menudeo:0},
+  {id:186, nombre:"IVA", categoria:"ADMIN", precio_mayoreo:0, precio_menudeo:0}
+];
+
+let carrito = [];
+let productoSeleccionado = null;
+
+function filtrarProductos() {
+  const q = document.getElementById('v-buscar').value.toLowerCase();
+  const lista = q ? CATALOGO.filter(p => p.nombre.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q)) : CATALOGO;
+  renderListaProductos(lista);
+}
+
+function renderListaProductos(lista) {
+  const el = document.getElementById('v-lista-productos');
+  el.innerHTML = lista.map(p => `
+    <button class="producto-btn" onclick="abrirModalQty(${p.id})">
+      <div>
+        <div class="producto-nombre">${p.nombre}</div>
+        <div class="producto-cat">${p.categoria}</div>
+      </div>
+      <div class="producto-precio">${fmt(p.precio_mayoreo)}</div>
+    </button>`).join('');
+}
+
+function abrirModalQty(id) {
+  productoSeleccionado = CATALOGO.find(p => p.id === id);
+  if (!productoSeleccionado) return;
+  document.getElementById('qty-producto-nombre').textContent = productoSeleccionado.nombre;
+  document.getElementById('qty-precio-label').textContent = `Mayoreo: ${fmt(productoSeleccionado.precio_mayoreo)} · Menudeo: ${fmt(productoSeleccionado.precio_menudeo)}`;
+  document.getElementById('qty-input').value = 1;
+  document.getElementById('qty-precio-input').value = productoSeleccionado.precio_mayoreo;
+  document.getElementById('modal-qty').classList.add('open');
+  setTimeout(() => document.getElementById('qty-input').focus(), 100);
+}
+
+function cerrarModalQty() {
+  document.getElementById('modal-qty').classList.remove('open');
+  productoSeleccionado = null;
+}
+
+function agregarAlCarrito() {
+  if (!productoSeleccionado) return;
+  const qty   = Number(document.getElementById('qty-input').value);
+  const precio = Number(document.getElementById('qty-precio-input').value);
+  if (!qty || !precio) return alert('Ingresa cantidad y precio');
+  carrito.push({
+    producto: productoSeleccionado.nombre,
+    categoria: productoSeleccionado.categoria,
+    qty, precio,
+    total: qty * precio
+  });
+  cerrarModalQty();
+  renderCarrito();
+}
+
+function renderCarrito() {
+  const el = document.getElementById('carrito-items');
+  if (carrito.length === 0) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px">Carrito vacío</div>';
+    document.getElementById('carrito-total').textContent = '$0.00';
+    return;
+  }
+  el.innerHTML = carrito.map((item, i) => `
+    <div class="carrito-item">
+      <div style="flex:1">
+        <div class="carrito-item-nombre">${item.producto}</div>
+        <div class="carrito-item-det">${item.qty} × ${fmt(item.precio)}</div>
+      </div>
+      <div class="carrito-item-total">${fmt(item.total)}</div>
+      <button onclick="quitarDelCarrito(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button>
+    </div>`).join('');
+  const total = carrito.reduce((s, i) => s + i.total, 0);
+  document.getElementById('carrito-total').textContent = fmt(total);
+}
+
+function quitarDelCarrito(i) {
+  carrito.splice(i, 1);
+  renderCarrito();
+}
+
+function limpiarCarrito() {
+  carrito = [];
+  renderCarrito();
+}
+
+async function iniciarVenta() {
+  if (carrito.length === 0) return alert('Agrega al menos un producto');
+  const total = carrito.reduce((s, i) => s + i.total, 0);
+  const resumen = carrito.map(i => `${i.qty}x ${i.producto}`).join(', ');
+  pedirPin('Confirmar Venta', `${resumen} = ${fmt(total)}`, async (pin) => {
+    let folios = [];
+    for (const item of carrito) {
+      const r = await api({
+        action: 'registrarVenta',
+        turno_id: turnoActivo?.id || '',
+        cajero_id: currentUser.id,
+        cajero_nombre: currentUser.nombre,
+        producto: item.producto,
+        categoria: item.categoria,
+        qty: item.qty,
+        precio: item.precio,
+        vendedor_id: currentUser.id,
+        vendedor_nombre: currentUser.nombre,
+        nota_id: document.getElementById('v-nota-id').value || '',
+        pin
+      });
+      if (!r.ok) return alert('Error en ' + item.producto + ': ' + r.error);
+      folios.push(r.data.folio);
+    }
+    alert(`✅ Venta registrada\n${folios.length} producto(s) — Total: ${fmt(total)}`);
+    limpiarCarrito();
+    document.getElementById('v-nota-id').value = '';
+    document.getElementById('v-buscar').value = '';
+    renderListaProductos(CATALOGO);
+  });
+}
+
+// ── NOTAS ─────────────────────────────────────────────────────
+
+function abrirModalNota() {
+  document.getElementById('form-nota').style.display = 'block';
+}
+function cerrarFormNota() {
+  document.getElementById('form-nota').style.display = 'none';
+}
+
+function crearNotaConPin() {
+  const cliente = document.getElementById('n-cliente').value.trim();
+  const total   = document.getElementById('n-total').value;
+  const obs     = document.getElementById('n-obs').value;
+  if (!cliente || !total) return alert('Completa cliente y total');
+  pedirPin('Crear Nota', `Cliente: ${cliente} — ${fmt(total)}`, async (pin) => {
+    const r = await api({ action: 'crearNota', cajero_id: currentUser.id, cajero_nombre: currentUser.nombre, cliente, total, observaciones: obs, pin });
+    if (!r.ok) return alert(r.error);
+    alert(`✅ Nota creada: ${r.data.numero}`);
+    cerrarFormNota();
+    loadNotas('todas');
+  });
+}
+
+async function loadNotas(estatus) {
+  const r = await api({ action: 'getNotas', estatus: estatus === 'todas' ? '' : estatus });
+  const tbody = document.getElementById('notas-tabla');
+  tbody.innerHTML = '';
+  (r.data || []).reverse().forEach(n => {
+    const esPendiente = n.estatus === 'PENDIENTE';
+    tbody.innerHTML += `
+      <tr>
+        <td><span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${n.numero}</span></td>
+        <td>${n.cliente}</td>
+        <td style="font-weight:600">${fmt(n.total)}</td>
+        <td><span class="badge ${esPendiente ? 'badge-yellow' : 'badge-green'}">${n.estatus}</span></td>
+        <td>${n.cajero_nombre}</td>
+        <td>${fmtDate(n.timestamp)}</td>
+        <td>
+          ${esPendiente ? `<button class="btn btn-success btn-sm" onclick="cobrarNotaConPin('${n.id}','${n.numero}')">Cobrar →</button>` : ''}
+        </td>
+      </tr>`;
+  });
+}
+
+function cobrarNotaConPin(nota_id, numero) {
+  pedirPin('Cobrar Nota', `Marcar ${numero} como cobrada`, async (pin) => {
+    const r = await api({ action: 'cobrarNota', nota_id, cajero_id: currentUser.id, pin });
+    if (!r.ok) return alert(r.error);
+    alert('✅ Nota marcada como cobrada');
+    loadNotas('todas');
+  });
+}
+
+// ── INICIO ────────────────────────────────────────────────────
+
+async function loadInicio() {
+  await refreshTurno();
+  const r = await api({ action: 'reporteDia', fecha: new Date().toISOString().slice(0, 10) });
+  if (!r.ok) return;
+  const d = r.data;
+  document.getElementById('s-total').textContent  = fmt(d.total_ventas);
+  document.getElementById('s-ventas').textContent = d.num_ventas;
+  document.getElementById('s-notas').textContent  = d.notas_pendientes;
+
+  // Turno banner
+  const banner = document.getElementById('turno-banner');
+  if (turnoActivo) {
+    banner.innerHTML = `<div class="turno-banner"><div class="turno-info"><div class="turno-cajero">🟢 ${turnoActivo.cajero_nombre}</div><div class="turno-desde">Turno activo desde ${fmtDate(turnoActivo.hora_inicio)}</div></div></div>`;
+  } else {
+    banner.innerHTML = `<div style="background:rgba(255,183,3,0.1);border:1px solid rgba(255,183,3,0.3);border-radius:12px;padding:14px 20px;color:var(--warn);margin-bottom:16px">⚠️ No hay turno activo. Ve a <b>Turno / Caja</b> para abrir uno.</div>`;
+  }
+
+  // Ventas recientes
+  const rv = await api({ action: 'getVentas', fecha_inicio: new Date().toISOString().slice(0, 10) });
+  const tbody = document.getElementById('ventas-recientes');
+  tbody.innerHTML = '';
+  (rv.data || []).slice(-10).reverse().forEach(v => {
+    tbody.innerHTML += `<tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${v.folio}</span></td>
+      <td>${v.producto}</td><td>${v.qty}</td>
+      <td style="font-weight:600">${fmt(v.total)}</td>
+      <td>${v.cajero_nombre}</td>
+      <td>${fmtDate(v.timestamp)}</td>
+    </tr>`;
+  });
+}
+
+// ── HISTORIAL ────────────────────────────────────────────────
+
+async function loadHistorial() {
+  const r = await api({ action: 'getVentas' });
+  const tbody = document.getElementById('hist-tabla');
+  tbody.innerHTML = '';
+  (r.data || []).reverse().forEach(v => {
+    tbody.innerHTML += `<tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${v.folio}</span></td>
+      <td>${v.producto}</td><td>${v.qty}</td><td>${fmt(v.precio)}</td>
+      <td style="font-weight:600">${fmt(v.total)}</td>
+      <td>${v.cajero_nombre}</td><td>${fmtDate(v.timestamp)}</td>
+    </tr>`;
+  });
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+
+async function loadAdmin() {
+  const r = await api({ action: 'getUsuarios' });
+  const tbody = document.getElementById('admin-usuarios');
+  tbody.innerHTML = '';
+  (r.data || []).forEach(u => {
+    tbody.innerHTML += `<tr>
+      <td>${u.id}</td><td>${u.nombre}</td><td>${u.usuario}</td>
+      <td><span class="badge badge-purple">${u.rol}</span></td>
+      <td><span class="badge ${u.activo === 'TRUE' || u.activo === true ? 'badge-green' : 'badge-red'}">${u.activo === 'TRUE' || u.activo === true ? 'Activo' : 'Inactivo'}</span></td>
+    </tr>`;
+  });
+}
+
+function toggleFormUsuario() {
+  const f = document.getElementById('form-usuario');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function crearUsuario() {
+  const r = await api({
+    action: 'crearUsuario',
+    nombre:    document.getElementById('u-nombre').value,
+    usuario:   document.getElementById('u-usuario').value,
+    contrasena:document.getElementById('u-pass').value,
+    pin:       document.getElementById('u-pin').value,
+    rol:       document.getElementById('u-rol').value
+  });
+  if (!r.ok) return alert(r.error);
+  alert('✅ Usuario creado');
+  toggleFormUsuario();
+  loadAdmin();
+}
+
+// ── PRODUCTOS ────────────────────────────────────────────────
+
+async function loadProductos() {
+  const r = await api({ action: 'getProductos' });
+  const dl = document.getElementById('productos-list');
+  (r.data || []).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.nombre;
+    dl.appendChild(opt);
+  });
+}
+
+// ── PIN MODAL ─────────────────────────────────────────────────
+
+let pinValue = '';
+let pinCallback = null;
+
+function pedirPin(title, sub, callback) {
+  pinValue = '';
+  pinCallback = callback;
+  document.getElementById('pin-title').textContent = title;
+  document.getElementById('pin-sub').textContent = sub;
+  document.getElementById('pin-display').textContent = '····';
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-modal').classList.add('open');
+}
+
+function pinInput(d) {
+  if (pinValue.length >= 4) return;
+  pinValue += d;
+  document.getElementById('pin-display').textContent = '●'.repeat(pinValue.length) + '·'.repeat(4 - pinValue.length);
+}
+
+function pinClear() {
+  pinValue = pinValue.slice(0, -1);
+  document.getElementById('pin-display').textContent = '●'.repeat(pinValue.length) + '·'.repeat(4 - pinValue.length);
+}
+
+async function pinConfirm() {
+  if (pinValue.length < 4) { document.getElementById('pin-error').textContent = 'Ingresa 4 dígitos'; return; }
+  document.getElementById('pin-modal').classList.remove('open');
+  if (pinCallback) await pinCallback(pinValue);
+  pinValue = '';
+  pinCallback = null;
+}
+
+function pinCancel() {
+  document.getElementById('pin-modal').classList.remove('open');
+  pinValue = '';
+  pinCallback = null;
+}
+
+// ── GESTIÓN DE PRODUCTOS ─────────────────────────────────────
+
+// El catálogo vive en memoria; los cambios se sincronizan con el Sheet via Apps Script
+// pero también se guardan en localStorage para persistir entre recargas
+
+function cargarCatalogoLocal() {
+  const saved = localStorage.getItem('caja_catalogo');
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      if (Array.isArray(data) && data.length > 0) {
+        CATALOGO.length = 0;
+        data.forEach(p => CATALOGO.push(p));
+      }
+    } catch(e) {}
+  }
+}
+
+function guardarCatalogoLocal() {
+  localStorage.setItem('caja_catalogo', JSON.stringify(CATALOGO));
+}
+
+function renderTablaProductos() {
+  const q      = (document.getElementById('prod-buscar')?.value || '').toLowerCase();
+  const cat    = document.getElementById('prod-filtro-cat')?.value || '';
+  const estado = document.getElementById('prod-filtro-estado')?.value || 'activo';
+
+  let lista = CATALOGO.filter(p => {
+    const matchQ   = !q   || p.nombre.toLowerCase().includes(q) || p.categoria.toLowerCase().includes(q);
+    const matchCat = !cat || p.categoria === cat;
+    const matchEst = estado === 'todos' ? true : estado === 'activo' ? p.activo !== false : p.activo === false;
+    return matchQ && matchCat && matchEst;
+  });
+
+  const tbody = document.getElementById('prod-tabla');
+  if (!tbody) return;
+  tbody.innerHTML = lista.map(p => `
+    <tr style="${p.activo === false ? 'opacity:0.45' : ''}">
+      <td style="font-family:'JetBrains Mono',monospace;color:var(--muted)">${p.id}</td>
+      <td style="font-weight:600">${p.nombre}</td>
+      <td><span class="badge badge-purple">${p.categoria}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace">${p.precio_mayoreo ? fmt(p.precio_mayoreo) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-family:'JetBrains Mono',monospace">${p.precio_menudeo ? fmt(p.precio_menudeo) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><span class="badge ${p.activo === false ? 'badge-red' : 'badge-green'}">${p.activo === false ? 'Inactivo' : 'Activo'}</span></td>
+      <td>
+        <div class="gap-8">
+          <button class="btn btn-ghost btn-sm" onclick="editarProducto(${p.id})">✏️</button>
+          <button class="btn btn-sm ${p.activo === false ? 'btn-success' : 'btn-danger'}" onclick="toggleProducto(${p.id})">
+            ${p.activo === false ? 'Activar' : 'Desactivar'}
+          </button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+  // Llenar categorías únicas en el filtro
+  const cats = [...new Set(CATALOGO.map(p => p.categoria))].sort();
+  const selCat = document.getElementById('prod-filtro-cat');
+  if (selCat && selCat.options.length <= 1) {
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; opt.textContent = c;
+      selCat.appendChild(opt);
+    });
+  }
+
+  // Datalist categorías en el form
+  const dl = document.getElementById('cats-list');
+  if (dl && dl.options.length === 0) {
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c; dl.appendChild(opt);
+    });
+  }
+}
+
+function toggleFormProducto(clear = true) {
+  const f = document.getElementById('form-producto');
+  if (!f) return;
+  const visible = f.style.display !== 'none';
+  f.style.display = visible ? 'none' : 'block';
+  if (!visible && clear) {
+    document.getElementById('prod-edit-id').value = '';
+    document.getElementById('prod-nombre').value = '';
+    document.getElementById('prod-categoria').value = '';
+    document.getElementById('prod-precio-may').value = '';
+    document.getElementById('prod-precio-men').value = '';
+    document.getElementById('form-prod-title').textContent = 'Nuevo Producto';
+  }
+}
+
+function editarProducto(id) {
+  const p = CATALOGO.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('prod-edit-id').value = p.id;
+  document.getElementById('prod-nombre').value = p.nombre;
+  document.getElementById('prod-categoria').value = p.categoria;
+  document.getElementById('prod-precio-may').value = p.precio_mayoreo || '';
+  document.getElementById('prod-precio-men').value = p.precio_menudeo || '';
+  document.getElementById('form-prod-title').textContent = 'Editar Producto';
+  document.getElementById('form-producto').style.display = 'block';
+  document.getElementById('form-producto').scrollIntoView({ behavior: 'smooth' });
+}
+
+function guardarProducto() {
+  const editId  = document.getElementById('prod-edit-id').value;
+  const nombre  = document.getElementById('prod-nombre').value.trim().toUpperCase();
+  const cat     = document.getElementById('prod-categoria').value.trim().toUpperCase();
+  const pMay    = Number(document.getElementById('prod-precio-may').value) || 0;
+  const pMen    = Number(document.getElementById('prod-precio-men').value) || 0;
+
+  if (!nombre || !cat) return alert('Nombre y categoría son obligatorios');
+
+  if (editId) {
+    // Editar existente
+    const idx = CATALOGO.findIndex(p => String(p.id) === String(editId));
+    if (idx >= 0) {
+      CATALOGO[idx] = { ...CATALOGO[idx], nombre, categoria: cat, precio_mayoreo: pMay, precio_menudeo: pMen };
+    }
+  } else {
+    // Nuevo producto
+    const maxId = CATALOGO.reduce((m, p) => Math.max(m, p.id), 0);
+    CATALOGO.push({ id: maxId + 1, nombre, categoria: cat, precio_mayoreo: pMay, precio_menudeo: pMen, activo: true });
+  }
+
+  guardarCatalogoLocal();
+  toggleFormProducto(false);
+  document.getElementById('form-producto').style.display = 'none';
+  renderTablaProductos();
+  renderListaProductos(CATALOGO.filter(p => p.activo !== false));
+  alert('✅ Producto guardado');
+}
+
+function toggleProducto(id) {
+  const p = CATALOGO.find(x => x.id === id);
+  if (!p) return;
+  p.activo = p.activo === false ? true : false;
+  guardarCatalogoLocal();
+  renderTablaProductos();
+  renderListaProductos(CATALOGO.filter(x => x.activo !== false));
+}
+
+// ── CARGA INICIAL — restaurar sesión si existe
+document.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('caja_user');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('tb-user').textContent = currentUser.nombre + ' · ' + currentUser.rol;
+      if (currentUser.rol === 'admin') {
+    document.getElementById('tab-admin').style.display = '';
+    document.getElementById('tab-productos').style.display = '';
+  }
+      await loadInicio();
+      await refreshTurno();
+    } catch(e) {
+      localStorage.removeItem('caja_user');
+    }
+  }
+  cargarCatalogoLocal();
+  loadProductos();
+  renderListaProductos(CATALOGO.filter(p => p.activo !== false));
+  renderCarrito();
+});
+</script>
+
+</body>
+</html>
