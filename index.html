@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema Caja</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;600;700&display=swap');
+
+  :root {
+    --bg: #0d0d14;
+    --surface: #14141f;
+    --card: #1c1c2e;
+    --border: #2a2a40;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --danger: #ff4d6d;
+    --warn: #ffb703;
+    --text: #e8e8f0;
+    --muted: #6b6b8a;
+    --success: #06d6a0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ── LOGIN ─────────────────────────────────── */
+  #login-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 30% 50%, #1a1040 0%, #0d0d14 60%);
+  }
+
+  .login-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 380px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+
+  .logo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .login-title {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    color: var(--text);
+  }
+
+  .field { margin-bottom: 18px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+
+  input[type=text], input[type=password], input[type=number], select, textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    transition: border 0.2s;
+    outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-primary:hover { background: #7c73ff; transform: translateY(-1px); }
+  .btn-success { background: var(--success); color: #0d0d14; }
+  .btn-danger  { background: var(--danger); color: #fff; }
+  .btn-warn    { background: var(--warn); color: #0d0d14; }
+  .btn-ghost   { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-sm { padding: 7px 14px; font-size: 13px; }
+
+  .error-msg { color: var(--danger); font-size: 13px; margin-top: 12px; text-align: center; }
+
+  /* ── MAIN APP ──────────────────────────────── */
+  #app { display: none; min-height: 100vh; }
+
+  /* TOPBAR */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 16px; }
+  .topbar-logo { font-family: 'JetBrains Mono', monospace; font-size: 13px; letter-spacing: 2px; color: var(--accent); }
+  .turno-badge {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .turno-badge span { color: var(--accent2); font-weight: 600; }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 13px;
+  }
+  .user-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); }
+
+  /* NAV */
+  .nav-tabs {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 24px;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* CONTENT */
+  .content { padding: 32px 24px; max-width: 1100px; margin: 0 auto; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* CARDS */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+  }
+  .stat-label { font-size: 12px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+  .stat-value.green { color: var(--success); }
+  .stat-value.purple { color: var(--accent); }
+  .stat-value.yellow { color: var(--warn); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(108,99,255,0.05); }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .badge-green  { background: rgba(6,214,160,0.15); color: var(--success); }
+  .badge-yellow { background: rgba(255,183,3,0.15);  color: var(--warn); }
+  .badge-red    { background: rgba(255,77,109,0.15);  color: var(--danger); }
+  .badge-purple { background: rgba(108,99,255,0.15); color: var(--accent); }
+
+  /* FORM GRID */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-full { grid-column: 1/-1; }
+
+  /* PIN MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 36px;
+    width: 340px;
+    text-align: center;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; }
+
+  .pin-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 32px;
+    letter-spacing: 16px;
+    color: var(--accent);
+    margin-bottom: 24px;
+    min-height: 48px;
+  }
+
+  .pin-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .pin-btn {
+    height: 56px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pin-btn:hover { background: var(--border); }
+  .pin-btn:active { transform: scale(0.95); }
+  .pin-clear { background: rgba(255,183,3,0.1); border-color: var(--warn); color: var(--warn); }
+  .pin-ok    { background: rgba(6,214,160,0.1); border-color: var(--success); color: var(--success); }
+
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+  }
+  .section-title { font-size: 20px; font-weight: 700; }
+
+  .gap-8 { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* TURNO ACTIVO BANNER */
+  .turno-banner {
+    background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(0,212,170,0.1));
+    border: 1px solid rgba(108,99,255,0.3);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .turno-info { display: flex; flex-direction: column; gap: 4px; }
+  .turno-cajero { font-size: 16px; font-weight: 700; color: var(--accent2); }
+  .turno-desde { font-size: 12px; color: var(--muted); }
+
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .content { padding: 20px 16px; }
+    .topbar { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ CONFIGURACIÓN ═══════════════════════════════════════ -->
+<script>
+  // ⚠️ REEMPLAZA ESTA URL con la de tu Apps Script desplegado
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxsIs3SfFMme9Peqp1ltFiG9rf3FpCUFSFf_-rfBv6YbqmxJTG4opnk_HSkcrJ5FaP_Fw/exec';
+
+  let currentUser = null;
+  let turnoActivo = null;
+  let pendingAction = null; // acción que espera PIN
+
+  async function api(data) {
+    const params = new URLSearchParams();
+    Object.keys(data).forEach(k => {
+      const v = data[k];
+      params.append(k, typeof v === 'object' ? JSON.stringify(v) : v);
+    });
+    const res = await fetch(API_URL + '?' + params.toString());
+    return res.json();
+  }
+
+  function fmt(n) {
+    return Number(n || 0).toLocaleString('es-MX', { style: 'currency', currency: 'MXN' });
+  }
+  function fmtDate(iso) {
+    return iso ? new Date(iso).toLocaleString('es-MX') : '—';
+  }
+</script>
+
+<!-- ═══ LOGIN ═══════════════════════════════════════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="logo">Sistema</div>
+    <div class="login-title">Control de Caja</div>
+    <div class="field">
+      <label>Usuario</label>
+      <input type="text" id="l-user" placeholder="tu usuario" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Contraseña</label>
+      <input type="password" id="l-pass" placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Entrar →</button>
+    <div class="error-msg" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ═══ APP PRINCIPAL ═══════════════════════════════════════ -->
+<div id="app">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">CAJA</div>
+      <div class="turno-badge" id="tb-turno">Sin turno activo</div>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="user-dot"></div>
+        <span id="tb-user">—</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <!-- NAV TABS -->
+  <div class="nav-tabs" id="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('inicio')" data-page="inicio">Inicio</div>
+    <div class="nav-tab" onclick="showPage('ventas')" data-page="ventas">Nueva Venta</div>
+    <div class="nav-tab" onclick="showPage('notas')" data-page="notas">Notas</div>
+    <div class="nav-tab" onclick="showPage('caja')" data-page="caja">Turno / Caja</div>
+    <div class="nav-tab" onclick="showPage('historial')" data-page="historial">Historial</div>
+    <div class="nav-tab" id="tab-admin" onclick="showPage('admin')" data-page="admin" style="display:none">Admin</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ─── INICIO ─────────────────────────────── -->
+    <div class="page active" id="page-inicio">
+      <div class="section-header">
+        <div class="section-title">Panel de hoy</div>
+        <button class="btn btn-ghost btn-sm" onclick="loadInicio()">↻ Actualizar</button>
+      </div>
+
+      <div id="turno-banner"></div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total del día</div><div class="stat-value green" id="s-total">$0</div></div>
+        <div class="stat-card"><div class="stat-label">Ventas registradas</div><div class="stat-value purple" id="s-ventas">0</div></div>
+        <div class="stat-card"><div class="stat-label">Notas pendientes</div><div class="stat-value yellow" id="s-notas">0</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Ventas recientes</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Folio</th><th>Producto</th><th>Qty</th><th>Total</th><th>Cajero</th><th>Hora</th></tr></thead>
+            <tbody id="ventas-recientes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── NUEVA VENTA ──────────────────────────── -->
+    <div class="page" id="page-ventas">
+      <div class="section-title" style="margin-bottom:24px">Registrar Venta</div>
+
+      <div class="card">
+        <div class="form-grid">
+          <div class="field">
+            <label>Producto</label>
+            <input type="text" id="v-producto" placeholder="Nombre del producto" list="productos-list">
+            <datalist id="productos-list"></datalist>
+          </div>
+          <div class="field">
+            <label>Categoría</label>
+            <input type="text" id="v-categoria" placeholder="Ej: Mayoreo, Menudeo">
+          </div>
+          <div class="field">
+            <label>Cantidad</label>
+            <input type="number" id="v-qty" value="1" min="1">
+          </div>
+          <div class="field">
+            <label>Precio unitario</label>
+            <input type="number" id="v-precio" placeholder="0.00" step="0.01">
+          </div>
+          <div class="field">
+            <label>Nota asociada (opcional)</label>
+            <input type="text" id="v-nota-id" placeholder="ID de nota si aplica">
+          </div>
+          <div class="field">
+            <label>Total calculado</label>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:700;color:var(--success);padding-top:8px" id="v-total-calc">$0.00</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:auto;margin-top:8px" onclick="iniciarVenta()">
+          Registrar con PIN →
+        </button>
+      </div>
+    </div>
+
+    <!-- ─── NOTAS ─────────────────────────────────── -->
+    <div class="page" id="page-notas">
+      <div class="section-header">
+        <div class="section-title">Notas de Venta</div>
+        <button class="btn btn-success btn-sm" onclick="abrirModalNota()">+ Nueva nota</button>
+      </div>
+
+      <div class="gap-8" style="margin-bottom:20px">
+        <button class="btn btn-ghost btn-sm" onclick="loadNotas('todas')">Todas</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadNotas('PENDIENTE')">Pendientes</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadNotas('COBRADA')">Cobradas</button>
+      </div>
+
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Cliente</th><th>Total</th><th>Estatus</th><th>Cajero</th><th>Fecha</th><th>Acción</th></tr></thead>
+            <tbody id="notas-tabla"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Form nueva nota -->
+      <div class="card" id="form-nota" style="display:none">
+        <div class="card-title">Nueva Nota de Venta</div>
+        <div class="form-grid">
+          <div class="field"><label>Cliente</label><input type="text" id="n-cliente" placeholder="Nombre del cliente"></div>
+          <div class="field"><label>Total</label><input type="number" id="n-total" placeholder="0.00" step="0.01"></div>
+          <div class="field form-full"><label>Observaciones</label><textarea id="n-obs" rows="2" placeholder="Notas adicionales..."></textarea></div>
+        </div>
+        <div class="gap-8" style="margin-top:8px">
+          <button class="btn btn-success" onclick="crearNotaConPin()">Crear con PIN →</button>
+          <button class="btn btn-ghost" onclick="cerrarFormNota()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TURNO / CAJA ──────────────────────────── -->
+    <div class="page" id="page-caja">
+      <div class="section-title" style="margin-bottom:24px">Gestión de Turno</div>
+
+      <div class="card" id="panel-sin-turno">
+        <div class="card-title">No hay turno activo</div>
+        <button class="btn btn-success" onclick="iniciarAbrirTurno()">Abrir Turno con PIN →</button>
+      </div>
+
+      <div id="panel-turno-activo" style="display:none">
+        <div class="turno-banner">
+          <div class="turno-info">
+            <div class="turno-cajero" id="caja-cajero-nombre">—</div>
+            <div class="turno-desde" id="caja-turno-desde">Desde: —</div>
+          </div>
+          <div class="gap-8">
+            <button class="btn btn-warn btn-sm" onclick="iniciarRelevo()">Relevo →</button>
+            <button class="btn btn-ghost btn-sm" onclick="iniciarCierreCaja()">Cuadre de Caja →</button>
+            <button class="btn btn-danger btn-sm" onclick="iniciarCerrarTurno()">Cerrar Turno →</button>
+          </div>
+        </div>
+
+        <div class="card" id="form-relevo" style="display:none">
+          <div class="card-title">Registrar Relevo</div>
+          <div class="form-grid">
+            <div class="field"><label>Tu nombre (quien entra)</label><input type="text" id="rel-entra"></div>
+            <div class="field"><label>Nombre de quien sale</label><input type="text" id="rel-sale"></div>
+          </div>
+          <div class="gap-8" style="margin-top:8px">
+            <button class="btn btn-warn" onclick="confirmarRelevo()">Confirmar con PIN →</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('form-relevo').style.display='none'">Cancelar</button>
+          </div>
+        </div>
+
+        <div class="card" id="form-cierre-caja" style="display:none">
+          <div class="card-title">Cuadre de Caja</div>
+          <div class="form-grid">
+            <div class="field"><label>Efectivo contado ($)</label><input type="number" id="cc-efectivo" placeholder="0.00" step="0.01"></div>
+            <div class="field"><label>Observaciones</label><input type="text" id="cc-obs" placeholder="Notas del cuadre"></div>
+          </div>
+          <div id="cuadre-preview" style="display:none;margin-top:16px"></div>
+          <div class="gap-8" style="margin-top:8px">
+            <button class="btn btn-success" onclick="confirmarCierreCaja()">Registrar Cuadre con PIN →</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('form-cierre-caja').style.display='none'">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── HISTORIAL ─────────────────────────────── -->
+    <div class="page" id="page-historial">
+      <div class="section-title" style="margin-bottom:24px">Historial de Ventas</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Folio</th><th>Producto</th><th>Qty</th><th>Precio</th><th>Total</th><th>Cajero</th><th>Fecha</th></tr></thead>
+            <tbody id="hist-tabla"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ADMIN ──────────────────────────────────── -->
+    <div class="page" id="page-admin">
+      <div class="section-title" style="margin-bottom:24px">Administración</div>
+
+      <div class="card">
+        <div class="card-title">Usuarios del sistema</div>
+        <div class="table-wrap" style="margin-bottom:16px">
+          <table>
+            <thead><tr><th>ID</th><th>Nombre</th><th>Usuario</th><th>Rol</th><th>Estado</th></tr></thead>
+            <tbody id="admin-usuarios"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="toggleFormUsuario()">+ Nuevo usuario</button>
+      </div>
+
+      <div class="card" id="form-usuario" style="display:none">
+        <div class="card-title">Nuevo Usuario</div>
+        <div class="form-grid">
+          <div class="field"><label>Nombre completo</label><input type="text" id="u-nombre"></div>
+          <div class="field"><label>Usuario (login)</label><input type="text" id="u-usuario"></div>
+          <div class="field"><label>Contraseña</label><input type="password" id="u-pass"></div>
+          <div class="field"><label>PIN (4 dígitos)</label><input type="password" id="u-pin" maxlength="4"></div>
+          <div class="field">
+            <label>Rol</label>
+            <select id="u-rol">
+              <option value="cajero">Cajero</option>
+              <option value="vendedor">Vendedor</option>
+              <option value="contador">Contador</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+        </div>
+        <div class="gap-8" style="margin-top:8px">
+          <button class="btn btn-primary" onclick="crearUsuario()">Crear usuario</button>
+          <button class="btn btn-ghost" onclick="toggleFormUsuario()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- ═══ PIN MODAL ════════════════════════════════════════════ -->
+<div class="modal-overlay" id="pin-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="pin-title">Confirmar con PIN</div>
+    <div class="modal-sub" id="pin-sub">Ingresa tu PIN de 4 dígitos</div>
+    <div class="pin-display" id="pin-display">····</div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinInput('1')">1</button>
+      <button class="pin-btn" onclick="pinInput('2')">2</button>
+      <button class="pin-btn" onclick="pinInput('3')">3</button>
+      <button class="pin-btn" onclick="pinInput('4')">4</button>
+      <button class="pin-btn" onclick="pinInput('5')">5</button>
+      <button class="pin-btn" onclick="pinInput('6')">6</button>
+      <button class="pin-btn" onclick="pinInput('7')">7</button>
+      <button class="pin-btn" onclick="pinInput('8')">8</button>
+      <button class="pin-btn" onclick="pinInput('9')">9</button>
+      <button class="pin-btn pin-clear" onclick="pinClear()">⌫</button>
+      <button class="pin-btn" onclick="pinInput('0')">0</button>
+      <button class="pin-btn pin-ok" onclick="pinConfirm()">✓</button>
+    </div>
+    <div class="error-msg" id="pin-error"></div>
+    <button class="btn btn-ghost btn-sm" style="width:100%;margin-top:8px" onclick="pinCancel()">Cancelar</button>
+  </div>
+</div>
+
+<!-- ═══ LÓGICA ════════════════════════════════════════════════ -->
+<script>
+
+// ── NAVEGACIÓN ───────────────────────────────────────────────
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelector(`[data-page="${name}"]`)?.classList.add('active');
+  if (name === 'inicio')    loadInicio();
+  if (name === 'historial') loadHistorial();
+  if (name === 'notas')     loadNotas('todas');
+  if (name === 'admin')     loadAdmin();
+}
+
+// ── AUTH ─────────────────────────────────────────────────────
+
+async function doLogin() {
+  const usuario    = document.getElementById('l-user').value.trim();
+  const contrasena = document.getElementById('l-pass').value;
+  const r = await api({ action: 'login', usuario, contrasena });
+  if (!r.ok) { document.getElementById('login-err').textContent = r.error; return; }
+  currentUser = r.data;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('tb-user').textContent = currentUser.nombre + ' · ' + currentUser.rol;
+  if (currentUser.rol === 'admin') document.getElementById('tab-admin').style.display = '';
+  loadInicio();
+  await refreshTurno();
+}
+
+function doLogout() {
+  currentUser = null;
+  turnoActivo = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('l-pass').value = '';
+  document.getElementById('login-err').textContent = '';
+}
+
+// ── TURNO ─────────────────────────────────────────────────────
+
+async function refreshTurno() {
+  const r = await api({ action: 'getTurnoActivo' });
+  turnoActivo = r.data;
+  const badge = document.getElementById('tb-turno');
+  if (turnoActivo) {
+    badge.innerHTML = `Turno: <span>${turnoActivo.cajero_nombre}</span>`;
+    document.getElementById('panel-sin-turno').style.display = 'none';
+    document.getElementById('panel-turno-activo').style.display = 'block';
+    document.getElementById('caja-cajero-nombre').textContent = turnoActivo.cajero_nombre + ' en caja';
+    document.getElementById('caja-turno-desde').textContent = 'Desde: ' + fmtDate(turnoActivo.hora_inicio);
+  } else {
+    badge.innerHTML = 'Sin turno activo';
+    document.getElementById('panel-sin-turno').style.display = 'block';
+    document.getElementById('panel-turno-activo').style.display = 'none';
+  }
+}
+
+function iniciarAbrirTurno() {
+  pedirPin('Abrir Turno', 'Confirma con tu PIN para abrir el turno', async (pin) => {
+    const r = await api({ action: 'abrirTurno', cajero_id: currentUser.id, cajero_nombre: currentUser.nombre, pin });
+    if (!r.ok) return alert(r.error);
+    await refreshTurno();
+    alert('✅ Turno abierto');
+  });
+}
+
+function iniciarCerrarTurno() {
+  if (!turnoActivo) return;
+  pedirPin('Cerrar Turno', 'Ingresa tu PIN para cerrar el turno', async (pin) => {
+    const r = await api({ action: 'cerrarTurno', turno_id: turnoActivo.id, cajero_id: currentUser.id, pin });
+    if (!r.ok) return alert(r.error);
+    await refreshTurno();
+    alert(`✅ Turno cerrado. Total: ${fmt(r.data.total)}`);
+  });
+}
+
+function iniciarRelevo() {
+  document.getElementById('form-relevo').style.display = 'block';
+}
+
+function confirmarRelevo() {
+  const entra = document.getElementById('rel-entra').value.trim();
+  const sale  = document.getElementById('rel-sale').value.trim();
+  if (!entra || !sale) return alert('Completa los campos');
+  pedirPin('Relevo', `${entra} entra, ${sale} sale`, async (pin) => {
+    const r = await api({ action: 'relevo', turno_id: turnoActivo.id, entra_id: currentUser.id, entra_nombre: entra, sale_nombre: sale, pin });
+    if (!r.ok) return alert(r.error);
+    document.getElementById('form-relevo').style.display = 'none';
+    await refreshTurno();
+    alert('✅ Relevo registrado');
+  });
+}
+
+function iniciarCierreCaja() {
+  document.getElementById('form-cierre-caja').style.display = 'block';
+}
+
+function confirmarCierreCaja() {
+  const efectivo = document.getElementById('cc-efectivo').value;
+  const obs      = document.getElementById('cc-obs').value;
+  if (!efectivo) return alert('Ingresa el efectivo contado');
+  pedirPin('Cuadre de Caja', 'Confirma el cuadre con tu PIN', async (pin) => {
+    const r = await api({ action: 'cierreCaja', turno_id: turnoActivo.id, cajero_id: currentUser.id, cajero_nombre: currentUser.nombre, efectivo_contado: efectivo, observaciones: obs, pin });
+    if (!r.ok) return alert(r.error);
+    document.getElementById('form-cierre-caja').style.display = 'none';
+    alert(`✅ Cuadre registrado.\nSistema: ${fmt(r.data.total_sistema)}\nDiferencia: ${fmt(r.data.diferencia)}`);
+  });
+}
+
+// ── VENTAS ────────────────────────────────────────────────────
+
+document.addEventListener('input', () => {
+  const qty   = Number(document.getElementById('v-qty')?.value || 0);
+  const prec  = Number(document.getElementById('v-precio')?.value || 0);
+  const el    = document.getElementById('v-total-calc');
+  if (el) el.textContent = fmt(qty * prec);
+});
+
+function iniciarVenta() {
+  const producto  = document.getElementById('v-producto').value.trim();
+  const categoria = document.getElementById('v-categoria').value.trim();
+  const qty       = document.getElementById('v-qty').value;
+  const precio    = document.getElementById('v-precio').value;
+  if (!producto || !qty || !precio) return alert('Completa producto, cantidad y precio');
+  pedirPin('Confirmar Venta', `${qty}x ${producto} = ${fmt(Number(qty)*Number(precio))}`, async (pin) => {
+    const r = await api({
+      action: 'registrarVenta',
+      turno_id: turnoActivo?.id || '',
+      cajero_id: currentUser.id,
+      cajero_nombre: currentUser.nombre,
+      producto, categoria, qty, precio,
+      vendedor_id: currentUser.id,
+      vendedor_nombre: currentUser.nombre,
+      nota_id: document.getElementById('v-nota-id').value,
+      pin
+    });
+    if (!r.ok) return alert(r.error);
+    alert(`✅ Venta registrada. Folio: ${r.data.folio}`);
+    document.getElementById('v-producto').value = '';
+    document.getElementById('v-qty').value = '1';
+    document.getElementById('v-precio').value = '';
+    document.getElementById('v-total-calc').textContent = '$0.00';
+  });
+}
+
+// ── NOTAS ─────────────────────────────────────────────────────
+
+function abrirModalNota() {
+  document.getElementById('form-nota').style.display = 'block';
+}
+function cerrarFormNota() {
+  document.getElementById('form-nota').style.display = 'none';
+}
+
+function crearNotaConPin() {
+  const cliente = document.getElementById('n-cliente').value.trim();
+  const total   = document.getElementById('n-total').value;
+  const obs     = document.getElementById('n-obs').value;
+  if (!cliente || !total) return alert('Completa cliente y total');
+  pedirPin('Crear Nota', `Cliente: ${cliente} — ${fmt(total)}`, async (pin) => {
+    const r = await api({ action: 'crearNota', cajero_id: currentUser.id, cajero_nombre: currentUser.nombre, cliente, total, observaciones: obs, pin });
+    if (!r.ok) return alert(r.error);
+    alert(`✅ Nota creada: ${r.data.numero}`);
+    cerrarFormNota();
+    loadNotas('todas');
+  });
+}
+
+async function loadNotas(estatus) {
+  const r = await api({ action: 'getNotas', estatus: estatus === 'todas' ? '' : estatus });
+  const tbody = document.getElementById('notas-tabla');
+  tbody.innerHTML = '';
+  (r.data || []).reverse().forEach(n => {
+    const esPendiente = n.estatus === 'PENDIENTE';
+    tbody.innerHTML += `
+      <tr>
+        <td><span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${n.numero}</span></td>
+        <td>${n.cliente}</td>
+        <td style="font-weight:600">${fmt(n.total)}</td>
+        <td><span class="badge ${esPendiente ? 'badge-yellow' : 'badge-green'}">${n.estatus}</span></td>
+        <td>${n.cajero_nombre}</td>
+        <td>${fmtDate(n.timestamp)}</td>
+        <td>
+          ${esPendiente ? `<button class="btn btn-success btn-sm" onclick="cobrarNotaConPin('${n.id}','${n.numero}')">Cobrar →</button>` : ''}
+        </td>
+      </tr>`;
+  });
+}
+
+function cobrarNotaConPin(nota_id, numero) {
+  pedirPin('Cobrar Nota', `Marcar ${numero} como cobrada`, async (pin) => {
+    const r = await api({ action: 'cobrarNota', nota_id, cajero_id: currentUser.id, pin });
+    if (!r.ok) return alert(r.error);
+    alert('✅ Nota marcada como cobrada');
+    loadNotas('todas');
+  });
+}
+
+// ── INICIO ────────────────────────────────────────────────────
+
+async function loadInicio() {
+  await refreshTurno();
+  const r = await api({ action: 'reporteDia', fecha: new Date().toISOString().slice(0, 10) });
+  if (!r.ok) return;
+  const d = r.data;
+  document.getElementById('s-total').textContent  = fmt(d.total_ventas);
+  document.getElementById('s-ventas').textContent = d.num_ventas;
+  document.getElementById('s-notas').textContent  = d.notas_pendientes;
+
+  // Turno banner
+  const banner = document.getElementById('turno-banner');
+  if (turnoActivo) {
+    banner.innerHTML = `<div class="turno-banner"><div class="turno-info"><div class="turno-cajero">🟢 ${turnoActivo.cajero_nombre}</div><div class="turno-desde">Turno activo desde ${fmtDate(turnoActivo.hora_inicio)}</div></div></div>`;
+  } else {
+    banner.innerHTML = `<div style="background:rgba(255,183,3,0.1);border:1px solid rgba(255,183,3,0.3);border-radius:12px;padding:14px 20px;color:var(--warn);margin-bottom:16px">⚠️ No hay turno activo. Ve a <b>Turno / Caja</b> para abrir uno.</div>`;
+  }
+
+  // Ventas recientes
+  const rv = await api({ action: 'getVentas', fecha_inicio: new Date().toISOString().slice(0, 10) });
+  const tbody = document.getElementById('ventas-recientes');
+  tbody.innerHTML = '';
+  (rv.data || []).slice(-10).reverse().forEach(v => {
+    tbody.innerHTML += `<tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${v.folio}</span></td>
+      <td>${v.producto}</td><td>${v.qty}</td>
+      <td style="font-weight:600">${fmt(v.total)}</td>
+      <td>${v.cajero_nombre}</td>
+      <td>${fmtDate(v.timestamp)}</td>
+    </tr>`;
+  });
+}
+
+// ── HISTORIAL ────────────────────────────────────────────────
+
+async function loadHistorial() {
+  const r = await api({ action: 'getVentas' });
+  const tbody = document.getElementById('hist-tabla');
+  tbody.innerHTML = '';
+  (r.data || []).reverse().forEach(v => {
+    tbody.innerHTML += `<tr>
+      <td><span style="font-family:'JetBrains Mono',monospace;color:var(--accent)">${v.folio}</span></td>
+      <td>${v.producto}</td><td>${v.qty}</td><td>${fmt(v.precio)}</td>
+      <td style="font-weight:600">${fmt(v.total)}</td>
+      <td>${v.cajero_nombre}</td><td>${fmtDate(v.timestamp)}</td>
+    </tr>`;
+  });
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+
+async function loadAdmin() {
+  const r = await api({ action: 'getUsuarios' });
+  const tbody = document.getElementById('admin-usuarios');
+  tbody.innerHTML = '';
+  (r.data || []).forEach(u => {
+    tbody.innerHTML += `<tr>
+      <td>${u.id}</td><td>${u.nombre}</td><td>${u.usuario}</td>
+      <td><span class="badge badge-purple">${u.rol}</span></td>
+      <td><span class="badge ${u.activo === 'TRUE' || u.activo === true ? 'badge-green' : 'badge-red'}">${u.activo === 'TRUE' || u.activo === true ? 'Activo' : 'Inactivo'}</span></td>
+    </tr>`;
+  });
+}
+
+function toggleFormUsuario() {
+  const f = document.getElementById('form-usuario');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function crearUsuario() {
+  const r = await api({
+    action: 'crearUsuario',
+    nombre:    document.getElementById('u-nombre').value,
+    usuario:   document.getElementById('u-usuario').value,
+    contrasena:document.getElementById('u-pass').value,
+    pin:       document.getElementById('u-pin').value,
+    rol:       document.getElementById('u-rol').value
+  });
+  if (!r.ok) return alert(r.error);
+  alert('✅ Usuario creado');
+  toggleFormUsuario();
+  loadAdmin();
+}
+
+// ── PRODUCTOS ────────────────────────────────────────────────
+
+async function loadProductos() {
+  const r = await api({ action: 'getProductos' });
+  const dl = document.getElementById('productos-list');
+  (r.data || []).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.nombre;
+    dl.appendChild(opt);
+  });
+}
+
+// ── PIN MODAL ─────────────────────────────────────────────────
+
+let pinValue = '';
+let pinCallback = null;
+
+function pedirPin(title, sub, callback) {
+  pinValue = '';
+  pinCallback = callback;
+  document.getElementById('pin-title').textContent = title;
+  document.getElementById('pin-sub').textContent = sub;
+  document.getElementById('pin-display').textContent = '····';
+  document.getElementById('pin-error').textContent = '';
+  document.getElementById('pin-modal').classList.add('open');
+}
+
+function pinInput(d) {
+  if (pinValue.length >= 4) return;
+  pinValue += d;
+  document.getElementById('pin-display').textContent = '●'.repeat(pinValue.length) + '·'.repeat(4 - pinValue.length);
+}
+
+function pinClear() {
+  pinValue = pinValue.slice(0, -1);
+  document.getElementById('pin-display').textContent = '●'.repeat(pinValue.length) + '·'.repeat(4 - pinValue.length);
+}
+
+async function pinConfirm() {
+  if (pinValue.length < 4) { document.getElementById('pin-error').textContent = 'Ingresa 4 dígitos'; return; }
+  document.getElementById('pin-modal').classList.remove('open');
+  if (pinCallback) await pinCallback(pinValue);
+  pinValue = '';
+  pinCallback = null;
+}
+
+function pinCancel() {
+  document.getElementById('pin-modal').classList.remove('open');
+  pinValue = '';
+  pinCallback = null;
+}
+
+// Carga inicial de productos al arrancar
+document.addEventListener('DOMContentLoaded', () => {
+  loadProductos();
+});
+</script>
+
+</body>
+</html>
